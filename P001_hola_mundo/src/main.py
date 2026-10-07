@@ -1,8 +1,8 @@
 def pregunta_01():
 
-    raise NotImplementedError
+    return "Hola mundo "
 
 
 def pregunta_02():
 
-    raise NotImplementedError
+    return "Hello world "
