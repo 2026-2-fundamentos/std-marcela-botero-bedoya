@@ -173,14 +173,87 @@ def clean_amount_column(df):
     return df
 
 
+def clean_discount_column(df):
+    # Limpia la columna de descuento
+    df["discount"] = df["discount"].str.strip()
+    df["discount"] = df["discount"].str.replace("%", "", regex=False)
+    df["discount"] = df["discount"].astype(float)
+    df["discount"] = df["discount"].map(lambda x: x / 100 if x > 1 else x)
+
+    return df
+
+def clean_weight_column(df):
+    # Limpia la columna de peso y la deja en kg
+    # "50000 g" -> 50.0 | "0.0050 ton" -> 5.0 | "5 kg" -> 5.0 | "12" -> 12.0
+    def convert_value(value):
+        if pd.isna(value):
+            return value
+        value = str(value).strip().lower().replace(",", ".")
+        if value.endswith(" ton"):
+            return float(value[:-4]) * 1000
+        if value.endswith(" kg"):
+            return float(value[:-3])
+        if value.endswith(" g"):
+            return float(value[:-2]) / 1000
+        return float(value)
+
+    df["weight"] = df["weight"].map(convert_value).astype(float)
+    return df
+
+
+def clean_units_column(df):
+    # Limpia la columna de unidades
+    # Se usa Int64 para conservar los vacíos sin convertirlos a decimales.
+    def convert_value(value):
+        if pd.isna(value):
+            return pd.NA
+        value = str(value).strip().lower().replace("units", "").replace("unit", "")
+        return int(float(value))
+
+    df["units"] = df["units"].map(convert_value).astype("Int64")
+    return df
+
+
+def clean_unit_price_column(df):
+    # Limpia la columna de precio unitario
+    # "$49,000.00" -> 49000.0 | "1.750.000.00" -> 1750000.0 | "48000.00" -> 48000.0
+    def convert_value(value):
+        if pd.isna(value):
+            return value
+        value = str(value).strip().replace("$", "").replace(",", "")
+        # Si hay varios puntos, solo el último es el decimal; los demás son miles
+        if value.count(".") > 1:
+            integer_part, decimal_part = value.rsplit(".", 1)
+            value = integer_part.replace(".", "") + "." + decimal_part
+        return float(value)
+
+    df["unit_price"] = df["unit_price"].map(convert_value).astype(float)
+    return df
+
+
+def clean_contact_email_column(df):
+    # Limpia la columna de correo electrónico de contacto
+    # "sin correo" (u otro valor sin formato de correo) -> vacío
+    df["contact_email"] = df["contact_email"].str.strip().str.lower()
+    valid = df["contact_email"].str.fullmatch(r"[^@\s]+@[^@\s]+\.[^@\s]+", na=False)
+    df.loc[~valid, "contact_email"] = pd.NA
+    return df
+
+
 def main():
-    df = pd.read_csv(INPUT_FILE)
+    df = pd.read_csv(INPUT_FILE, dtype=str, encoding="utf-8-sig")
     df = clean_column_names(df)
     df = clean_supplier_column(df)
     df = clean_country_column(df)
     df = clean_city_column(df)
     df = clean_purchase_date_column(df)
     df = clean_amount_column(df)
+    df = clean_discount_column(df)
+    df = clean_weight_column(df)
+    df = clean_units_column(df)
+    df = clean_unit_price_column(df)
+    df = clean_contact_email_column(df)
+    OUTPUT_FILE.parent.mkdir(exist_ok=True)
     df.to_csv(OUTPUT_FILE, index=False)
 
 
