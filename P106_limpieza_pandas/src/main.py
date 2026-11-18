@@ -203,7 +203,6 @@ def clean_weight_column(df):
 
 def clean_units_column(df):
     # Limpia la columna de unidades
-    # Se usa Int64 para conservar los vacíos sin convertirlos a decimales.
     def convert_value(value):
         if pd.isna(value):
             return pd.NA
@@ -216,7 +215,6 @@ def clean_units_column(df):
 
 def clean_unit_price_column(df):
     # Limpia la columna de precio unitario
-    # "$49,000.00" -> 49000.0 | "1.750.000.00" -> 1750000.0 | "48000.00" -> 48000.0
     def convert_value(value):
         if pd.isna(value):
             return value
@@ -233,7 +231,7 @@ def clean_unit_price_column(df):
 
 def clean_contact_email_column(df):
     # Limpia la columna de correo electrónico de contacto
-    # "sin correo" (u otro valor sin formato de correo) -> vacío
+
     df["contact_email"] = df["contact_email"].str.strip().str.lower()
     valid = df["contact_email"].str.fullmatch(r"[^@\s]+@[^@\s]+\.[^@\s]+", na=False)
     df.loc[~valid, "contact_email"] = pd.NA
